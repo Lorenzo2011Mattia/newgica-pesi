@@ -10,7 +10,7 @@
 :root[data-theme="dark"]{--bg:#0a1122;--card:#131c33;--tx:#f1f4fb;--mut:#9aa7c7;--line:#27345a;--bt:#7fb0ff;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:640px;margin:0 auto;padding:16px}
+.wrap{max-width:640px;margin:0 auto;padding:16px;min-height:100vh;display:flex;flex-direction:column;justify-content:space-between}
 .hero{background:linear-gradient(135deg,#0b3d91,#082a66);color:#fff;border-radius:20px;padding:28px 20px;text-align:center;border-bottom:6px solid var(--y);margin-bottom:16px}
 .hero h1{margin:6px 0 2px;font-size:26px}.hero p{margin:0;opacity:.85}.ball{font-size:52px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
@@ -31,8 +31,11 @@ button{font:inherit;border:0;border-radius:12px;padding:12px 16px;cursor:pointer
 .ex input[type=checkbox]{width:26px;height:26px;accent-color:#0b3d91}
 .in3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .err{color:#d33;font-size:14px;margin-top:8px}
+.succ{color:#2e7d32;font-size:14px;margin-top:8px}
 details summary{cursor:pointer;font-weight:600}
 .tabs{display:flex;gap:8px;margin-bottom:10px}.tabs button{flex:1}
+footer{margin-top:20px;padding:16px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)}
+footer a{color:var(--bt);text-decoration:none;font-weight:600}
 @keyframes up{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes sh{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(-16px) rotate(180deg)}60%{transform:translateY(-16px) rotate(200deg)}}
@@ -40,15 +43,9 @@ details summary{cursor:pointer;font-weight:600}
 @keyframes glow{50%{text-shadow:0 0 18px var(--y)}}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 .anim>*{animation:up .55s cubic-bezier(.2,.8,.2,1) both}
-.anim>*:nth-child(2){animation-delay:.08s}.anim>*:nth-child(3){animation-delay:.16s}.anim>*:nth-child(4){animation-delay:.24s}.anim>*:nth-child(5){animation-delay:.32s}.anim>*:nth-child(n+6){animation-delay:.4s}
-.anim .tile:nth-child(2){animation-delay:.1s}.anim .tile:nth-child(3){animation-delay:.2s}.anim .tile:nth-child(4){animation-delay:.3s}
 .hero{background:linear-gradient(120deg,#0b3d91,#1660d6,#082a66,#0b3d91);background-size:300% 300%;animation:sh 9s ease infinite}
 .ball{display:inline-block;animation:bob 2s ease-in-out infinite}
 button{transition:transform .15s,box-shadow .2s}button:active{transform:scale(.94)}
-.tile{transition:transform .25s,box-shadow .25s}.tile b{transition:transform .3s}.tile:hover{transform:translateY(-5px) rotate(-1deg);box-shadow:0 12px 26px rgba(11,61,145,.28)}.tile:hover b{transform:scale(1.3) rotate(-10deg)}
-.p{position:relative;overflow:hidden}.p::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-130%);animation:sw 3.2s infinite}
-.timer{animation:glow 2s ease-in-out infinite}
-.card{transition:box-shadow .2s}.card:hover{box-shadow:0 6px 18px rgba(11,61,145,.15)}
 .cf{position:fixed;top:-20px;width:10px;height:14px;z-index:99;pointer-events:none;animation:fall linear forwards}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -59,12 +56,12 @@ button{transition:transform .15s,box-shadow .2s}button:active{transform:scale(.9
 var mem={};
 var st={get:function(k,d){try{var v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in mem?mem[k]:d},set:function(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:function(k){delete mem[k];try{localStorage.removeItem(k)}catch(e){}}};
 var CATS=["Serie D maschile","Serie D femminile","U19 M","U19 F","U17 M","U17 F","U15 F"];
-var COACH="NEWGICA-2026",db=null,ath=null,sel=0,fcat="";
+var ADMIN_CODE="giacapesi2026",db=null,ath=null,sel=0,fcat="";
 var RUOLI=["Palleggiatore","Opposto","Schiacciatore","Centrale","Libero","Allenatore/Altro"];
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
 var uid=function(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
-var me=null,view="login",data=null,draft=null,w=null,tick=null,det=null,tab="login",err="";
+var me=null,view="login",data=null,draft=null,w=null,tick=null,det=null,tab="login",err="",succ="";
 async function sha(s){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("ngica:"+s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}
 function dk(){return "ng_data_"+me.id}
 function load(){data=st.get(dk(),{schede:[],storico:[]});sync()}
@@ -73,52 +70,106 @@ function sync(){if(!db||!me||me.tipo==="coach"||!data)return;try{db.doc("athlete
 (async function(){try{if(window.claude&&claude.use)db=await claude.use("db")}catch(e){}sync()})();
 function fmt(sec){var h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60,p=function(n){return String(n).padStart(2,"0")};return (h?h+":":"")+p(m)+":"+p(s)}
 function age(d){if(!d)return"";var b=new Date(d),n=new Date(),a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
-function go(v){view=v;err="";if(v!=="work"&&tick){clearInterval(tick);tick=null}var a=$("#app");a.classList.remove("anim");void a.offsetWidth;a.classList.add("anim");render();clearTimeout(go.t);go.t=setTimeout(function(){a.classList.remove("anim")},1100)}
+function go(v){view=v;err="";succ="";if(v!=="work"&&tick){clearInterval(tick);tick=null}var a=$("#app");a.classList.remove("anim");void a.offsetWidth;a.classList.add("anim");render();clearTimeout(go.t);go.t=setTimeout(function(){a.classList.remove("anim")},1100)}
 function confetti(){for(var i=0;i<60;i++){var d=document.createElement("i");d.className="cf";d.style.left=Math.random()*100+"vw";d.style.background=i%2?"#ffc400":"#3d7bff";d.style.borderRadius=i%3?"2px":"50%";d.style.animationDuration=(1.8+Math.random()*1.8)+"s";d.style.animationDelay=Math.random()*.4+"s";document.body.appendChild(d);setTimeout(function(x){x.remove()},4600,d)}}
+
 async function init(){
   var ap=$("#app");ap.classList.add("anim");setTimeout(function(){ap.classList.remove("anim")},1100);
   try{if(st.get("ng_v",0)!==2){Object.keys(localStorage).filter(function(k){return k.indexOf("ng_")===0}).forEach(function(k){localStorage.removeItem(k)});mem={}}}catch(e){}
   st.set("ng_v",2);
   var u=st.get("ng_users",[]);
-  if(false){
-    
-    st.set("ng_users",u);
-  }
   var s=st.get("ng_session",null);
   if(s){var f=u.filter(function(x){return x.id===s})[0];if(f){me=f;load();view="home";var a=st.get("ng_active_"+me.id,null);if(a)w=a}}
   render();
 }
+
 async function doLogin(){
   var e=$("#em").value.trim().toLowerCase(),p=$("#pw").value,u=st.get("ng_users",[]),h=await sha(p);
   var f=u.filter(function(x){return x.email===e&&x.ph===h})[0];
   if(!f){err="Email o password non corretti.";return render()}
   me=f;st.set("ng_session",f.id);load();w=st.get("ng_active_"+f.id,null);go("home");
 }
+
+async function doAdminLogin(){
+  var c=$("#adcode").value.trim();
+  if(c!==ADMIN_CODE){err="Codice segreto amministratore errato.";return render()}
+  me={id:"admin_master",tipo:"coach",nome:"Amministratore Master",ruolo:"Admin",cat:"Tutte",nascita:"",email:"admin@newgica.it",foto:""};
+  st.set("ng_session",me.id);load();go("home");
+}
+
 async function doReg(){
   var g=function(i){return $("#"+i).value.trim()},u=st.get("ng_users",[]),e=g("rem").toLowerCase();
-  if(!g("rn")||!e||!g("rp")||(!g("rd")&&$("#rt").value!=="coach")){err="Compila tutti i campi.";return render()}
+  if(!g("rn")||!e||!g("rp")||!g("rd")){err="Compila tutti i campi obbligatori.";return render()}
   if(g("rp").length<6){err="La password deve avere almeno 6 caratteri.";return render()}
-  var ph0=await sha(g("rp"));if(u.some(function(x){return x.email===e&&x.ph===ph0})){err="Con questa email esiste già un account con la stessa password: scegline un’altra.";return render()}
-  var co=$("#rt").value==="coach";if(co&&g("rcode")!==COACH){err="Codice allenatori non corretto.";return render()}var n={id:uid(),tipo:co?"coach":"atleta",nome:g("rn"),ruolo:$("#rr").value,cat:$("#rc").value,nascita:g("rd"),email:e,ph:await sha(g("rp"))};
+  if(u.some(function(x){return x.email===e})){err="Esiste già un account registrato con questa email!";return render()}
+  var n={id:uid(),tipo:"atleta",nome:g("rn"),ruolo:$("#rr").value,cat:$("#rc").value,nascita:g("rd"),email:e,ph:await sha(g("rp")),foto:""};
   u.push(n);st.set("ng_users",u);me=n;st.set("ng_session",n.id);load();w=null;go("home");
 }
+
+function doForgot(){
+  var e=$("#em").value.trim().toLowerCase();
+  if(!e){err="Inserisci prima la tua email nel campo sopra per recuperare la password.";return render()}
+  var u=st.get("ng_users",[]);
+  var f=u.filter(function(x){return x.email===e})[0];
+  if(!f){err="Nessun account trovato con questa email.";return render()}
+  succ="Ti è stata inviata un'email di recupero con le istruzioni.";
+  render();
+}
+
+function updateProfile(){
+  me.nome=$("#pnome").value.trim();
+  me.ruolo=$("#pruolo").value;
+  me.cat=$("#pcat").value;
+  me.nascita=$("#pnascita").value;
+  me.foto=$("#pfoto").value.trim();
+  var u=st.get("ng_users",[]);
+  var idx=u.findIndex(function(x){return x.id===me.id});
+  if(idx>=0){u[idx]=me;st.set("ng_users",u)}
+  succ="Profilo aggiornato con successo!";
+  render();
+}
+
 function logout(){st.del("ng_session");me=null;w=null;tab="login";go("login")}
 function topbar(t,back){return '<div class="row sp" style="margin-bottom:12px"><button class="g" onclick="go(\''+(back||"home")+'\')">← Indietro</button><b>'+t+'</b><span></span></div>'}
+
+function renderFooter(){
+  return '<footer><div>Supporto: <a href="mailto:lorenzo.mattia2016@gmail.com">lorenzo.mattia2016@gmail.com</a></div><div><a href="https://instagram.com/lorenzo_casamento_" target="_blank">IG: @lorenzo_casamento_</a></div></footer>';
+}
+
 function render(){
-  var h="",app=$("#app");if(view==="coach"||view==="ath"){app.innerHTML=view==="coach"?coachView():athView();return}
+  var h="",app=$("#app");
+  if(view==="coach"||view==="ath"||view==="profile"){
+    if(view==="coach")h=coachView();
+    else if(view==="ath")h=athView();
+    else if(view==="profile")h=profileView();
+    app.innerHTML=h+renderFooter();
+    return;
+  }
+  
   if(view==="login"){
-    h='<div class="hero"><div class="ball">🏐</div><h1>New Gi.Ca Sport Monreale</h1><p>Area pesi · giallo &amp; blu</p></div><div class="card"><div class="tabs"><button class="'+(tab==="login"?"s":"g")+'" onclick="tab=\'login\';err=\'\';render()">Accedi</button><button class="'+(tab==="reg"?"s":"g")+'" onclick="tab=\'reg\';err=\'\';render()">Crea account</button></div>';
-    if(tab==="login")h+='<label>Email</label><input id="em" type="email" autocomplete="username"><label>Password</label><input id="pw" type="password" autocomplete="current-password"><button class="p full" onclick="doLogin()">Entra</button>';
-    else h+='<label>Tipo di account</label><select id="rt"><option value="atleta">Atleta</option><option value="coach">Allenatore</option></select><label>Codice allenatori (solo per gli allenatori)</label><input id="rcode" placeholder="Lascia vuoto se sei atleta"><label>Nome e cognome</label><input id="rn"><label>Ruolo</label><select id="rr">'+RUOLI.map(function(r){return"<option>"+r+"</option>"}).join("")+'</select><label>Categoria</label><select id="rc">'+CATS.map(function(r){return"<option>"+r+"</option>"}).join("")+'</select><label>Data di nascita</label><input id="rd" type="date"><label>Email</label><input id="rem" type="email"><label>Password (min. 6 caratteri)</label><input id="rp" type="password" autocomplete="new-password"><button class="p full" onclick="doReg()">Crea account</button>';
-    h+=(err?'<div class="err">'+err+'</div>':'')+'</div>';
+    h='<div class="hero"><div class="ball">🏐</div><h1>New Gi.Ca Sport Monreale</h1><p>Area pesi · giallo &amp; blu</p></div>'
+    +'<div class="card"><div class="tabs"><button class="'+(tab==="login"?"s":"g")+'" onclick="tab=\'login\';err=\'\';succ=\'\';render()">Accedi</button><button class="'+(tab==="reg"?"s":"g")+'" onclick="tab=\'reg\';err=\'\';succ=\'\';render()">Crea account</button><button class="'+(tab==="admin"?"s":"g")+'" onclick="tab=\'admin\';err=\'\';succ=\'\';render()">Admin</button></div>';
+    
+    if(tab==="login"){
+      h+='<label>Email</label><input id="em" type="email" autocomplete="username"><label>Password</label><input id="pw" type="password" autocomplete="current-password">'
+      +'<button class="p full" onclick="doLogin()">Entra</button>'
+      +'<button class="g full" style="margin-top:8px;font-size:13px" onclick="doForgot()">Password dimenticata?</button>';
+    }else if(tab==="reg"){
+      h+='<label>Nome e cognome</label><input id="rn"><label>Ruolo</label><select id="rr">'+RUOLI.map(function(r){return"<option>"+r+"</option>"}).join("")+'</select><label>Categoria</label><select id="rc">'+CATS.map(function(r){return"<option>"+r+"</option>"}).join("")+'</select><label>Data di nascita</label><input id="rd" type="date"><label>Email</label><input id="rem" type="email"><label>Password (min. 6 caratteri)</label><input id="rp" type="password" autocomplete="new-password"><button class="p full" onclick="doReg()">Crea account</button>';
+    }else if(tab==="admin"){
+      h+='<label>Codice Segreto Amministratore</label><input id="adcode" type="password" placeholder="Inserisci codice segreto"><button class="s full" onclick="doAdminLogin()">Accedi come Admin</button>';
+    }
+    h+=(err?'<div class="err">'+err+'</div>':'')+(succ?'<div class="succ">'+succ+'</div>':'')+'</div>';
   }else if(view==="home"&&me.tipo==="coach"){
-    h='<div class="hero"><div class="ball">🏐</div><h1>Area allenatori</h1><p>'+esc(me.nome)+'</p></div><div class="grid"><button class="tile" onclick="loadAth()"><b>👥</b>Atleti e storici</button></div><div class="row sp" style="margin-top:16px"><span class="mut">'+esc(me.email)+'</span><button class="g" onclick="logout()">Esci</button></div>';
+    h='<div class="hero"><div class="ball">🏐</div><h1>Area allenatori / Admin</h1><p>'+esc(me.nome)+'</p></div><div class="grid"><button class="tile" onclick="loadAth()"><b>👥</b>Atleti e storici</button></div><div class="row sp" style="margin-top:16px"><span class="mut">'+esc(me.email)+'</span><button class="g" onclick="logout()">Esci</button></div>';
   }else if(view==="home"){
-    h='<div class="hero"><div class="ball">🏐</div><h1>Ciao '+esc(me.nome.split(" ")[0])+'!</h1><p>'+esc(me.ruolo)+' · '+esc(me.cat)+' · '+age(me.nascita)+' anni</p></div><div class="grid">'
+    var fotoAvatar=me.foto?'<img src="'+esc(me.foto)+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;float:right;">':'';
+    h='<div class="hero">'+fotoAvatar+'<div class="ball">🏐</div><h1>Ciao '+esc(me.nome.split(" ")[0])+'!</h1><p>'+esc(me.ruolo)+' · '+esc(me.cat)+' · '+age(me.nascita)+' anni</p></div><div class="grid">'
     +'<button class="tile" onclick="go(\'new\')"><b>🏋️</b>'+(w?"Riprendi allenamento":"Nuovo allenamento")+'</button>'
     +'<button class="tile" onclick="draft={id:uid(),nome:\'\',es:[{n:\'\',serie:3,rip:10,rec:90}]};go(\'edit\')"><b>📝</b>Nuova scheda</button>'
     +'<button class="tile" onclick="go(\'list\')"><b>📋</b>Visualizza schede</button>'
-    +'<button class="tile" onclick="go(\'hist\')"><b>📈</b>Storico</button></div>'
+    +'<button class="tile" onclick="go(\'hist\')"><b>📈</b>Storico</button>'
+    +'<button class="tile" onclick="go(\'profile\')" style="grid-column:span 2"><b>⚙️</b>Modifica profilo</button></div>'
     +'<div class="row sp" style="margin-top:16px"><span class="mut">'+esc(me.email)+'</span><button class="g" onclick="logout()">Esci</button></div>';
   }else if(view==="new"){
     if(w){startTimer();return renderWork()}
@@ -135,9 +186,22 @@ function render(){
   }else if(view==="hist"){
     h=topbar("Storico")+(data.storico.length?data.storico.map(function(a){var d=new Date(a.data),n=a.es.filter(function(x){return x.done}).length;return'<div class="card"><details><summary>'+d.toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"long",year:"numeric"})+' · '+esc(a.nome)+'</summary><p class="mut">Durata '+fmt(a.durata)+' · '+n+'/'+a.es.length+' esercizi fatti</p>'+a.es.map(function(x){return'<div style="padding:6px 0;border-top:1px solid var(--line)">'+(x.done?"✅":"⬜")+' <b>'+esc(x.n)+'</b><div class="mut">Programma: '+x.serie+'×'+esc(x.rip)+' · rec '+x.rec+'s'+(x.done?'<br>Fatto: '+(x.peso||"–")+' kg · '+(x.repF||"–")+' rip · recupero '+(x.recF||"–")+' s'+(x.nota?'<br>'+esc(x.nota):""):"")+'</div></div>'}).join("")+'<button class="d" style="margin-top:10px" onclick="if(confirm(\'Eliminare questo allenamento?\')){data.storico=data.storico.filter(function(z){return z.id!==\''+a.id+'\'});save();render()}">Elimina</button></details></div>'}).join(""):'<div class="card">Ancora nessun allenamento registrato.</div>');
   }
-  app.innerHTML=h;
+  app.innerHTML=h+renderFooter();
 }
-function loadAth(){view="coach";ath=null;err="";render();if(!db){ath=[];err="Il database condiviso non è disponibile: apri il link da claude.ai con il tuo account.";return render()}db.collection("athletes").get().then(function(s){ath=s.docs.map(function(d){return d.data()});render()}).catch(function(e){ath=[];err="Impossibile leggere i dati ("+(e.code||e.message)+").";render()})}
+
+function profileView(){
+  return topbar("Modifica Profilo")+'<div class="card">'
+  +'<label>Nome e cognome</label><input id="pnome" value="'+esc(me.nome)+'">'
+  +'<label>Ruolo</label><select id="pruolo">'+RUOLI.map(function(r){return '<option'+(me.ruolo===r?" selected":"")+'>'+r+'</option>'}).join("")+'</select>'
+  +'<label>Categoria</label><select id="pcat">'+CATS.map(function(c){return '<option'+(me.cat===c?" selected":"")+'>'+c+'</option>'}).join("")+'</select>'
+  +'<label>Data di nascita</label><input id="pnascita" type="date" value="'+esc(me.nascita||"")+'">'
+  +'<label>URL Foto Profilo (link immagine)</label><input id="pfoto" value="'+esc(me.foto||"")+'" placeholder="https://...">'
+  +'<button class="p full" onclick="updateProfile()">Salva Modifiche</button>'
+  +(succ?'<div class="succ">'+succ+'</div>':'')
+  +'</div>';
+}
+
+function loadAth(){view="coach";ath=null;err="";render();if(!db){ath=[];err="Il database condiviso non è disponibile.";return render()}db.collection("athletes").get().then(function(s){ath=s.docs.map(function(d){return d.data()});render()}).catch(function(e){ath=[];err="Impossibile leggere i dati.";render()})}
 function coachView(){
   var h=topbar("Atleti e storici")+'<label>Categoria</label><select onchange="fcat=this.value;render()"><option value="">Tutte</option>'+CATS.map(function(c){return'<option'+(c===fcat?" selected":"")+'>'+c+'</option>'}).join("")+'</select><div style="height:12px"></div>';
   if(ath===null)return h+'<p class="mut">Caricamento…</p>';
