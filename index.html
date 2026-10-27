@@ -63,38 +63,55 @@ var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){re
 var uid=function(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
 var me=null,view="login",data=null,draft=null,w=null,tick=null,det=null,tab="login",err="",succ="";
 async function sha(s){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("ngica:"+s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}
-function dk(){return "ng_data_"+me.id}
+
 function load(){
-  data=st.get(dk(),{schede:[],storico:[]});
-  if(me && me.schede) data.schede = me.schede;
-  if(me && me.storico) data.storico = me.storico;
+  data=st.get("ng_data_"+me.id,{schede:[],storico:[]});
+  if(me.schede) data.schede = me.schede;
+  if(me.storico) data.storico = me.storico;
   sync();
 }
+
 function save(){
-  st.set(dk(),data);
+  st.set("ng_data_"+me.id, data);
   sync();
 }
+
 function sync(){
-  if(!me||me.tipo==="coach"||!data)return;
-  // Sincronizza nello storage utenti locale
+  if(!me || me.tipo==="coach" || !data) return;
+  // Aggiorna localmente
   var u=st.get("ng_users",[]);
   var idx=u.findIndex(function(x){return x.id===me.id});
   if(idx>=0){
-    u[idx].schede=data.schede;
-    u[idx].storico=data.storico;
-    st.set("ng_users",u);
+    u[idx].schede = data.schede;
+    u[idx].storico = data.storico;
+    st.set("ng_users", u);
   }
-  // Sincronizza su Firebase Firestore se connesso
+  // Sincronizza su Firebase Firestore se disponibile
   if(db){
     try{
-      db.doc("athletes/"+me.id).set({
-        nome:me.nome,ruolo:me.ruolo,cat:me.cat,nascita:me.nascita||"",
-        email:me.email,schede:data.schede,storico:data.storico.slice(0,60),upd:Date.now()
-      }).catch(function(){})
+      db.collection("users").doc(me.id).set({
+        id: me.id,
+        tipo: me.tipo,
+        nome: me.nome,
+        ruolo: me.ruolo,
+        cat: me.cat,
+        nascita: me.nascita || "",
+        email: me.email,
+        ph: me.ph,
+        foto: me.foto || "",
+        schede: data.schede,
+        storico: data.storico,
+        upd: Date.now()
+      }, {merge: true}).catch(function(e){console.error(e);});
     }catch(e){}
   }
 }
-(async function(){try{if(window.claude&&claude.use)db=await claude.use("db")}catch(e){}sync()})();
+
+(async function(){
+  try{if(window.claude&&claude.use)db=await claude.use("db")}catch(e){}
+  sync();
+})();
+
 function fmt(sec){var h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60,p=function(n){return String(n).padStart(2,"0")};return (h?h+":":"")+p(m)+":"+p(s)}
 function age(d){if(!d)return"";var b=new Date(d),n=new Date(),a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
 function go(v){view=v;err="";succ="";if(v!=="work"&&tick){clearInterval(tick);tick=null}var a=$("#app");a.classList.remove("anim");void a.offsetWidth;a.classList.add("anim");render();clearTimeout(go.t);go.t=setTimeout(function(){a.classList.remove("anim")},1100)}
@@ -130,7 +147,7 @@ async function doReg(){
   if(g("rp").length<6){err="La password deve avere almeno 6 caratteri.";return render()}
   if(u.some(function(x){return x.email===e})){err="Esiste già un account registrato con questa email!";return render()}
   var n={id:uid(),tipo:"atleta",nome:g("rn"),ruolo:$("#rr").value,cat:$("#rc").value,nascita:g("rd"),email:e,ph:await sha(g("rp")),foto:"",schede:[],storico:[]};
-  u.push(n);st.set("ng_users",u);me=n;st.set("ng_session",n.id);load();w=null;go("home");
+  u.push(n);st.set("ng_users",u);me=n;st.set("ng_session",n.id);load();w=null;sync();go("home");
 }
 
 function doForgot(){
@@ -152,6 +169,7 @@ function updateProfile(){
   var u=st.get("ng_users",[]);
   var idx=u.findIndex(function(x){return x.id===me.id});
   if(idx>=0){u[idx]=me;st.set("ng_users",u)}
+  sync();
   succ="Profilo aggiornato con successo!";
   render();
 }
@@ -229,10 +247,21 @@ function profileView(){
 }
 
 function loadAth(){
-  view="coach";ath=null;err="";render();
-  var u=st.get("ng_users",[]);
-  ath=u.filter(function(x){return x.tipo!=="coach"});
-  render();
+  view="coach"; ath=null; err=""; render();
+  if(!db){
+    var u=st.get("ng_users",[]);
+    ath=u.filter(function(x){return x.tipo!=="coach"});
+    render();
+    return;
+  }
+  db.collection("users").get().then(function(s){
+    ath=s.docs.map(function(d){return d.data();}).filter(function(x){return x.tipo!=="coach"});
+    render();
+  }).catch(function(e){
+    var u=st.get("ng_users",[]);
+    ath=u.filter(function(x){return x.tipo!=="coach"});
+    render();
+  });
 }
 
 function coachView(){
