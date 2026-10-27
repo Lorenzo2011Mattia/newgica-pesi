@@ -78,7 +78,6 @@ function save(){
 
 function sync(){
   if(!me || me.tipo==="coach" || !data) return;
-  // Aggiorna localmente
   var u=st.get("ng_users",[]);
   var idx=u.findIndex(function(x){return x.id===me.id});
   if(idx>=0){
@@ -86,7 +85,6 @@ function sync(){
     u[idx].storico = data.storico;
     st.set("ng_users", u);
   }
-  // Sincronizza su Firebase Firestore se disponibile
   if(db){
     try{
       db.collection("users").doc(me.id).set({
@@ -150,14 +148,29 @@ async function doReg(){
   u.push(n);st.set("ng_users",u);me=n;st.set("ng_session",n.id);load();w=null;sync();go("home");
 }
 
-function doForgot(){
+async function doForgot(){
   var e=$("#em").value.trim().toLowerCase();
   if(!e){err="Inserisci prima la tua email nel campo sopra per recuperare la password.";return render()}
-  var u=st.get("ng_users",[]);
-  var f=u.filter(function(x){return x.email===e})[0];
-  if(!f){err="Nessun account trovato con questa email.";return render()}
-  succ="Ti è stata inviata un'email di recupero con le istruzioni.";
-  render();
+  
+  if(window.firebase && firebase.auth){
+    firebase.auth().sendPasswordResetEmail(e)
+      .then(function() {
+        succ="Email di recupero inviata con successo! Controlla la posta.";
+        err="";
+        render();
+      })
+      .catch(function(error) {
+        err="Errore: " + (error.message || "Impossibile inviare l'email.");
+        succ="";
+        render();
+      });
+  } else {
+    var u=st.get("ng_users",[]);
+    var f=u.filter(function(x){return x.email===e})[0];
+    if(!f){err="Nessun account trovato con questa email.";return render()}
+    succ="Ti è stata inviata un'email di recupero con le istruzioni.";
+    render();
+  }
 }
 
 function updateProfile(){
