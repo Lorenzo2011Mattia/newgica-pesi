@@ -201,7 +201,13 @@ function profileView(){
   +'</div>';
 }
 
-function loadAth(){view="coach";ath=null;err="";render();if(!db){ath=[];err="Il database condiviso non è disponibile.";return render()}db.collection("athletes").get().then(function(s){ath=s.docs.map(function(d){return d.data()});render()}).catch(function(e){ath=[];err="Impossibile leggere i dati.";render()})}
+function loadAth(){
+  view="coach";ath=null;err="";render();
+  var u=st.get("ng_users",[]);
+  ath=u.filter(function(x){return x.tipo!=="coach"});
+  render();
+}
+
 function coachView(){
   var h=topbar("Atleti e storici")+'<label>Categoria</label><select onchange="fcat=this.value;render()"><option value="">Tutte</option>'+CATS.map(function(c){return'<option'+(c===fcat?" selected":"")+'>'+c+'</option>'}).join("")+'</select><div style="height:12px"></div>';
   if(ath===null)return h+'<p class="mut">Caricamento…</p>';
@@ -210,6 +216,7 @@ function coachView(){
   if(!l.length)return h+'<div class="card">Nessun atleta in questa categoria.</div>';
   return h+l.map(function(a){var s=a.storico||[],u=s[0]?new Date(s[0].data).toLocaleDateString("it-IT"):"mai";return'<div class="card row sp"><div><b>'+esc(a.nome)+'</b><div class="mut">'+esc(a.ruolo)+' · '+s.length+' allenamenti · ultimo: '+u+'</div><span class="tag">'+esc(a.cat)+'</span></div><button class="p" onclick="sel='+ath.indexOf(a)+';go(\'ath\')">Apri</button></div>'}).join("");
 }
+
 function athView(){
   var a=ath&&ath[sel];if(!a)return topbar("Atleta","coach")+'<div class="card">Atleta non trovato.</div>';
   var s=a.storico||[],c=a.schede||[];
@@ -217,6 +224,7 @@ function athView(){
   +(s.length?s.map(function(x){var n=x.es.filter(function(z){return z.done}).length;return'<div class="card"><details><summary>'+new Date(x.data).toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"long",year:"numeric"})+' · '+esc(x.nome)+'</summary><p class="mut">Durata '+fmt(x.durata)+' · '+n+'/'+x.es.length+' esercizi fatti</p>'+x.es.map(function(z){return'<div style="padding:6px 0;border-top:1px solid var(--line)">'+(z.done?"✅":"⬜")+' <b>'+esc(z.n)+'</b><div class="mut">Programma: '+z.serie+'×'+esc(z.rip)+' · rec '+z.rec+'s'+(z.done?'<br>Fatto: '+(z.peso||"–")+' kg · '+(z.repF||"–")+' rip · recupero '+(z.recF||"–")+' s'+(z.nota?'<br>'+esc(z.nota):""):"")+'</div></div>'}).join("")+'</details></div>'}).join(""):'<div class="card">Nessun allenamento registrato.</div>')
   +'<div class="card"><details><summary>Schede ('+c.length+')</summary>'+c.map(function(k){return'<p><b>'+esc(k.nome)+'</b><br><span class="mut">'+k.es.map(function(e){return esc(e.n)+' '+e.serie+'×'+esc(e.rip)}).join(" · ")+'</span></p>'}).join("")+'</details></div>';
 }
+
 function saveDraft(){
   var d=draft;d.es=d.es.filter(function(x){return x.n.trim()});
   if(!d.nome.trim()||!d.es.length){err="Inserisci il nome della scheda e almeno un esercizio.";draft.es.length||draft.es.push({n:"",serie:3,rip:10,rec:90});return render()}
@@ -224,13 +232,16 @@ function saveDraft(){
   if(i>=0)data.schede[i]=d;else data.schede.push(d);
   save();go("list");
 }
+
 function startW(i){
   var s=data.schede[i];
   w={nome:s.nome,start:Date.now(),es:s.es.map(function(x){return{n:x.n,serie:x.serie,rip:x.rip,rec:x.rec,done:false,peso:"",repF:"",recF:x.rec,nota:""}})};
   st.set("ng_active_"+me.id,w);view="work";render();
 }
+
 function startTimer(){if(tick)clearInterval(tick);tick=setInterval(function(){var t=$("#tm");if(t)t.textContent=fmt(Math.floor((Date.now()-w.start)/1000))},1000)}
 function upd(i,k,v,r){w.es[i][k]=v;st.set("ng_active_"+me.id,w);if(r)render()}
+
 function renderWork(){
   view="work";startTimer();
   var n=w.es.filter(function(x){return x.done}).length;
@@ -238,11 +249,13 @@ function renderWork(){
   +w.es.map(function(x,i){return'<div class="card ex '+(x.done?"done":"")+'"><div class="row sp"><div><b>'+esc(x.n)+'</b><div class="mut">'+x.serie+'×'+esc(x.rip)+' · rec '+x.rec+'s</div></div><input type="checkbox" '+(x.done?"checked":"")+' onchange="upd('+i+',\'done\',this.checked,true)"></div><div class="in3"><div><label>Peso (kg)</label><input inputmode="decimal" value="'+esc(x.peso)+'" oninput="upd('+i+',\'peso\',this.value)"></div><div><label>Rip. fatte</label><input value="'+esc(x.repF)+'" oninput="upd('+i+',\'repF\',this.value)"></div><div><label>Recupero (s)</label><input inputmode="numeric" value="'+esc(x.recF)+'" oninput="upd('+i+',\'recF\',this.value)"></div></div><label>Note</label><input value="'+esc(x.nota)+'" oninput="upd('+i+',\'nota\',this.value)"></div>'}).join("")
   +'<button class="p full" onclick="finishW()">Termina e salva allenamento</button><button class="d full" onclick="if(confirm(\'Annullare l’allenamento senza salvare?\')){w=null;st.del(\'ng_active_\'+me.id);go(\'home\')}">Annulla allenamento</button>';
 }
+
 function finishW(){
   if(!confirm("Terminare e salvare l’allenamento?"))return;
   data.storico.unshift({id:uid(),data:new Date().toISOString(),durata:Math.floor((Date.now()-w.start)/1000),nome:w.nome,es:w.es});
   save();w=null;st.del("ng_active_"+me.id);go("hist");confetti();
 }
+
 init();
 </script>
 </body>
